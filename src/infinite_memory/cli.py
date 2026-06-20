@@ -342,15 +342,19 @@ def setup(
             "\n"
             "- Use the `infinite_memory.infinite_memory_search` MCP tool when prior conversation context, earlier decisions, previous setup, post-compaction continuity, a new task, or a conversation topic change may matter. Use it only when retrieved context is likely to improve the answer.\n"
             "- If the user asks to remember, recall, find, search, look up, retrieve, or check previous memory/conversation/context, treat that as an explicit request to use `infinite_memory.infinite_memory_search` before answering.\n"
+            "- If you are not fully confident because the answer may depend on prior conversation state, project-specific decisions, previous setup, exact commands, paths, versions, configuration, user preferences, or earlier mistakes, you MUST call `infinite_memory.infinite_memory_search` before answering. Do not guess. Search first.\n"
+            "- When in doubt, search Infinite Memory once with a targeted query before answering. A short search is better than a confident but wrong answer.\n"
             "- Do not blindly search the user's exact wording. First infer the user's intent, the relevant entities, decisions, constraints, and time/context clues, then write a concise semantic search query yourself and pass that query to `infinite_memory.infinite_memory_search`.\n"
         )
         old = agents.read_text() if agents.exists() else ""
-        if "treat that as an explicit request to use `infinite_memory.infinite_memory_search`" not in old:
+        if "If you are not fully confident because the answer may depend on prior conversation state" not in old:
             filtered = "\n".join(
                 line for line in old.splitlines()
                 if "infinite_memory.infinite_memory_search" not in line
                 and "Do not blindly search the user's exact wording" not in line
                 and "If the user asks to remember, recall" not in line
+                and "If you are not fully confident" not in line
+                and "When in doubt, search Infinite Memory" not in line
             ).strip()
             agents.write_text((filtered + "\n" if filtered else "") + hint)
 
