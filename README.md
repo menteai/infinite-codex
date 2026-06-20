@@ -9,11 +9,18 @@ No more “what did we decide again?”
 No more losing the plot after compaction.  
 No more manually pasting old context like it is 1999. 🚀
 
+Two killer promises:
+
+- 💸 **Completely free by default** — uses a local embedding model, so there is no required paid API.
+- 💯 **100% preserved memory** — stores the original text intact, then retrieves it efficiently only when it matters.
+
 ---
 
 ## ✨ What It Does
 
 - 🧠 **Permanent Codex memory** using vector embeddings
+- 💸 **Free local embeddings by default** — no required paid API
+- 💯 **Original text preserved intact** — efficient recall without lossy memory rewriting
 - 🔎 **Semantic search** over remembered turns
 - 🪝 **Lifecycle hooks** that save completed turns automatically
 - 🧩 **MCP tool integration** for model-controlled recall
