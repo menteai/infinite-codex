@@ -340,22 +340,23 @@ def setup(
         agents.parent.mkdir(parents=True, exist_ok=True)
         hint = (
             "\n"
-            "- At the start of every turn, silently inspect the user's request for one durable keyword or short search query that is likely to be useful much later. Prefer project names, file paths, commands, model/package names, settings, errors, APIs, and prior-decision topics. If it duplicates an already-obvious/current keyword, keep zero new keywords.\n"
+            "- Infinite Memory hooks mechanically track durable keywords from user prompts and may inject keyword-triggered recall when a later prompt contains remembered keywords and appears to need prior context.\n"
             "- Use the `infinite_memory.infinite_memory_search` MCP tool when prior conversation context, earlier decisions, previous setup, post-compaction continuity, a new task, or a conversation topic change may matter. Use it only when retrieved context is likely to improve the answer.\n"
             "- If the user asks to remember, recall, find, search, look up, retrieve, or check previous memory/conversation/context, treat that as an explicit request to use `infinite_memory.infinite_memory_search` before answering.\n"
             "- If the user's command is not fully understandable, depends on missing prior decisions, or has any uncertain reference, call `infinite_memory.infinite_memory_search` before answering.\n"
             "- Do not blindly search the user's exact wording. First infer the user's intent, the relevant entities, decisions, constraints, and time/context clues, then write a concise semantic search query yourself and pass that query to `infinite_memory.infinite_memory_search`.\n"
-            "- Do not expose the keyword/search routine unless the user asks.\n"
+            "- Do not expose the keyword/search process unless the user asks.\n"
         )
         old = agents.read_text() if agents.exists() else ""
-        if "At the start of every turn, silently inspect the user's request" not in old:
+        if "hooks mechanically track durable keywords" not in old:
             filtered = "\n".join(
                 line for line in old.splitlines()
                 if "infinite_memory.infinite_memory_search" not in line
                 and "Do not blindly search the user's exact wording" not in line
                 and "If the user asks to remember, recall" not in line
                 and "At the start of every turn, silently inspect the user's request" not in line
-                and "Do not expose the keyword/search routine" not in line
+                and "hooks mechanically track durable keywords" not in line
+                and "Do not expose the keyword/search" not in line
             ).strip()
             agents.write_text((filtered + "\n" if filtered else "") + hint)
 
