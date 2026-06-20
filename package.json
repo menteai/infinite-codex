@@ -1,0 +1,24 @@
+{
+  "name": "@menteai/infinite-memory",
+  "version": "0.1.1",
+  "description": "Vector memory MCP server for Codex session history",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "imemory": "bin/imemory.mjs"
+  },
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.mjs"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "src/**/*.py",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
