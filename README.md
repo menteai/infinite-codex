@@ -1,7 +1,7 @@
 # 🔥 INFINITE MEMORY FOR CODEX — YOUR CODEX NOW REMEMBERS EVERYTHING 🔥
 
-> Give Codex a long-term brain.  
-> Hook every finished turn. Embed it. Search it. Recall it. Keep moving. 🧠⚡
+> Give Codex a permanent, unlimited memory.  
+> No compaction loss. Preserve memories from 500 turns ago. 🧠⚡
 
 **Infinite Memory** is a vector-memory MCP + hook system for Codex. It captures completed Codex turns, embeds them locally or through a custom embeddings endpoint, stores them in SQLite, and exposes semantic recall back to Codex through MCP.
 
@@ -13,7 +13,7 @@ No more manually pasting old context like it is 1999. 🚀
 
 ## ✨ What It Does
 
-- 🧠 **Long-term Codex memory** using vector embeddings
+- 🧠 **Permanent Codex memory** using vector embeddings
 - 🔎 **Semantic search** over remembered turns
 - 🪝 **Lifecycle hooks** that save completed turns automatically
 - 🧩 **MCP tool integration** for model-controlled recall
