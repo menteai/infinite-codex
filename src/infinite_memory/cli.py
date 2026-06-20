@@ -372,7 +372,7 @@ def ingest_main() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="imemory",
+        prog="infinite",
         description="Set up and use Infinite Memory for Codex",
     )
     sub = parser.add_subparsers(dest="command")

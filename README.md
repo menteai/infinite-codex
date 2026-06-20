@@ -40,7 +40,7 @@ Infinite Memory stores Codex turns captured by lifecycle hooks. It combines each
 
 ```bash
 npm install -g @menteai/infinite-memory
-imemory
+infinite
 ```
 
 ### Or install from source
@@ -49,7 +49,7 @@ imemory
 git clone git@github.com:menteai/codex-infinite-memory.git
 cd codex-infinite-memory
 npm install -g .
-imemory
+infinite
 ```
 
 ### Python direct mode
@@ -58,10 +58,10 @@ imemory
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-imemory
+infinite
 ```
 
-`imemory` asks for the embedding backend and batch size:
+`infinite` asks for the embedding backend and batch size:
 
 ```text
 Select embedding model:
@@ -142,7 +142,7 @@ Codex CLI, IDE, and Codex app share the same setup:
 ~/.codex/hooks.json
 ```
 
-Run `imemory` once from a terminal, restart Codex, then use:
+Run `infinite` once from a terminal, restart Codex, then use:
 
 ```text
 /mcp    # check the MCP server
@@ -153,7 +153,7 @@ Run `imemory` once from a terminal, restart Codex, then use:
 
 ## 🧠 Embeddings
 
-Default backend is selected during `imemory` setup.
+Default backend is selected during `infinite` setup.
 
 Config file:
 
@@ -201,15 +201,15 @@ api_key_env = "CUSTOM_EMBEDDINGS_API_KEY"
 ## ⚔️ CLI Commands
 
 ```bash
-imemory              # setup config, database, hooks, and Codex MCP
-imemory setup        # same as above
-imemory ingest       # manually index Codex sessions
-imemory ingest --force
-imemory search "query text" --session-id SESSION_ID
-imemory stats
+infinite             # setup config, database, hooks, and Codex MCP
+infinite setup        # same as above
+infinite ingest       # manually index Codex sessions
+infinite ingest --force
+infinite search "query text" --session-id SESSION_ID
+infinite stats
 ```
 
-Manual `imemory ingest` exists for explicit imports. The normal memory path is hook-based capture after setup.
+Manual `infinite ingest` exists for explicit imports. The normal memory path is hook-based capture after setup.
 
 ---
 

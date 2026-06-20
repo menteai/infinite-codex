@@ -1,11 +1,11 @@
 {
   "name": "@menteai/infinite-memory",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Vector memory MCP server for Codex session history",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "imemory": "bin/imemory.mjs"
+    "infinite": "bin/infinite.mjs"
   },
   "scripts": {
     "postinstall": "node ./scripts/postinstall.mjs"
