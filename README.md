@@ -18,17 +18,17 @@ Two killer promises:
 
 ## ✨ What It Does
 
-- 🧠 **Permanent Codex memory** using vector embeddings
-- 💸 **Free local embeddings by default** — no required paid API
-- 💯 **Original text preserved intact** — efficient recall without lossy memory rewriting
-- 🔎 **Semantic search** over remembered turns
-- 🪝 **Lifecycle hooks** that save completed turns automatically
-- 🧩 **MCP tool integration** for model-controlled recall
-- 💥 **Post-compaction recall** so Codex can recover context after compression
-- 🗃️ **SQLite storage** — simple, local, portable
-- ⚙️ **Qwen3-Embedding-0.6B by default**
-- 🖥️ **Linux / macOS / Windows support**
-- 🧑‍💻 **Codex CLI, IDE, and Codex app compatible**
+- **Permanent Codex memory** using vector embeddings
+- **Free local embeddings by default** — no required paid API
+- **Original text preserved intact** — efficient recall without lossy memory rewriting
+- **Semantic search** over remembered turns
+- **Lifecycle hooks** that save completed turns automatically
+- **MCP tool integration** for model-controlled recall
+- **Post-compaction recall** so Codex can recover context after compression
+- **SQLite storage** — simple, local, portable
+- **Qwen3-Embedding-0.6B by default**
+- **Linux / macOS / Windows support**
+- **Codex CLI, IDE, and Codex app compatible**
 
 Infinite Memory stores Codex turns captured by lifecycle hooks. It combines each user request with the final assistant answer into one turn, embeds that turn, and stores it for later recall. Commentary, tool calls, tool output, incomplete turns, and duplicated event records are excluded.
 
