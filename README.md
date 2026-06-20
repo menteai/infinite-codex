@@ -1,7 +1,7 @@
-# 🔥 INFINITE MEMORY FOR CODEX — YOUR CODEX NOW REMEMBERS EVERYTHING 🔥
+# 🔥 INFINITE MEMORY FOR CODEX — YOUR CODEX NOW REMEMBERS EVERYTHING FOREVER 🔥
 
 > Give Codex a permanent, unlimited memory.  
-> No compaction loss. Preserve memories from 500 turns ago. 🧠⚡
+> No compaction loss. Preserve memories from 525 turns ago. 🧠⚡
 
 **Infinite Memory** is a vector-memory MCP + hook system for Codex. It captures completed Codex turns, embeds them locally or through a custom embeddings endpoint, stores them in SQLite, and exposes semantic recall back to Codex through MCP.
 
