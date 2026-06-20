@@ -1,30 +1,60 @@
-# Infinite Memory
+# 🔥 INFINITE MEMORY FOR CODEX — YOUR CODEX NOW REMEMBERS EVERYTHING 🔥
 
-Infinite Memory is a Codex MCP server that adds vector search over Codex session history.
+> Give Codex a long-term brain.  
+> Hook every finished turn. Embed it. Search it. Recall it. Keep moving. 🧠⚡
 
-Infinite Memory stores Codex turns captured by its lifecycle hooks. It combines each user request with its final assistant answer into one turn, embeds those turns, stores them in SQLite, and exposes memory search tools to Codex. Commentary, tool calls, tool output, incomplete turns, and duplicated event records are excluded.
+**Infinite Memory** is a vector-memory MCP + hook system for Codex. It captures completed Codex turns, embeds them locally or through a custom embeddings endpoint, stores them in SQLite, and exposes semantic recall back to Codex through MCP.
 
-## Quickstart
+No more “what did we decide again?”  
+No more losing the plot after compaction.  
+No more manually pasting old context like it is 1999. 🚀
 
-With npm:
+---
+
+## ✨ What It Does
+
+- 🧠 **Long-term Codex memory** using vector embeddings
+- 🔎 **Semantic search** over remembered turns
+- 🪝 **Lifecycle hooks** that save completed turns automatically
+- 🧩 **MCP tool integration** for model-controlled recall
+- 💥 **Post-compaction recall** so Codex can recover context after compression
+- 🗃️ **SQLite storage** — simple, local, portable
+- ⚙️ **Qwen3-Embedding-0.6B by default**
+- 🖥️ **Linux / macOS / Windows support**
+- 🧑‍💻 **Codex CLI, IDE, and Codex app compatible**
+
+Infinite Memory stores Codex turns captured by lifecycle hooks. It combines each user request with the final assistant answer into one turn, embeds that turn, and stores it for later recall. Commentary, tool calls, tool output, incomplete turns, and duplicated event records are excluded.
+
+---
+
+## 🚀 Quickstart
+
+### Install from npm
 
 ```bash
-cd /home/flqbh/Downloads/infinite-memory
 npm install -g @menteai/infinite-memory
 imemory
 ```
 
-With Python directly:
+### Or install from source
 
 ```bash
-cd /home/flqbh/Downloads/infinite-memory
+git clone git@github.com:menteai/codex-infinite-memory.git
+cd codex-infinite-memory
+npm install -g .
+imemory
+```
+
+### Python direct mode
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 imemory
 ```
 
-`imemory` prompts for the embedding backend and embedding batch size, then does the setup:
+`imemory` asks for the embedding backend and batch size:
 
 ```text
 Select embedding model:
@@ -34,33 +64,87 @@ Select embedding model:
 Embedding batch size [4]:
 ```
 
-Then it:
+Then it automatically:
 
-- writes `~/.codex/infinite-memory/config.toml`
-- creates `~/.codex/infinite-memory/memory.sqlite3`
-- registers the MCP server in `~/.codex/config.toml`
-- registers compact-recall hooks in `~/.codex/hooks.json`
-- adds a model-level usage hint to `~/.codex/AGENTS.md`
-- installs the selected local dependencies
-- re-indexes the database if the embedding model changed
+- 📝 writes `~/.codex/infinite-memory/config.toml`
+- 🗄️ creates `~/.codex/infinite-memory/memory.sqlite3`
+- 🧩 registers the MCP server in `~/.codex/config.toml`
+- 🪝 registers lifecycle hooks in `~/.codex/hooks.json`
+- 🧠 adds a model-level usage hint to `~/.codex/AGENTS.md`
+- 📦 installs selected local dependencies
 
 Restart Codex after setup. If Codex asks you to review hooks, open `/hooks` and trust the Infinite Memory hooks.
 
+---
 
-## Platform support
+## 🧨 How The Magic Works
 
-Infinite Memory is packaged for Linux, macOS, and Windows. The npm installer creates a local Python virtual environment using Python 3.11, 3.12, 3.13, or 3.14.
+```text
+Codex turn finishes
+  ↓
+Stop hook captures the completed turn
+  ↓
+Turn gets chunked + embedded
+  ↓
+Vector goes into SQLite
+  ↓
+Codex later calls infinite_memory_search
+  ↓
+Relevant memories come back as clean context
+```
+
+After context compaction:
+
+```text
+PostCompact hook marks the session
+  ↓
+Next UserPromptSubmit hook fires
+  ↓
+Infinite Memory searches the current session once
+  ↓
+Retrieved snippets are injected as temporary context
+  ↓
+Flag is cleared
+```
+
+Existing historical Codex sessions are **not automatically imported**. Infinite Memory remembers turns captured after setup through hooks.
+
+---
+
+## 🖥️ Platform Support
+
+Infinite Memory is packaged for:
+
+- 🐧 Linux
+- 🍎 macOS
+- 🪟 Windows
+
+The npm installer creates a local Python virtual environment using Python `3.11`, `3.12`, `3.13`, or `3.14`.
 
 Device behavior:
 
-- GPU option installs PyTorch and uses the best accelerator PyTorch exposes on the system.
-- macOS Apple Silicon/Metal uses PyTorch MPS when available.
-- Other systems use CUDA when available.
-- If no supported accelerator is available, runtime falls back to CPU.
+- ⚡ GPU option installs PyTorch and uses the best accelerator PyTorch exposes
+- 🍎 macOS Apple Silicon/Metal uses PyTorch MPS when available
+- 🟩 CUDA is used when available
+- 🧊 If no supported accelerator is available, runtime falls back to CPU
 
-Codex CLI, IDE, and Codex app share the same `~/.codex/config.toml` and `~/.codex/hooks.json` setup. Run `imemory` once from a terminal, then restart Codex. In the Codex app, open `/mcp` to check the MCP server and `/hooks` to trust the lifecycle hooks if prompted.
+Codex CLI, IDE, and Codex app share the same setup:
 
-## Embeddings
+```text
+~/.codex/config.toml
+~/.codex/hooks.json
+```
+
+Run `imemory` once from a terminal, restart Codex, then use:
+
+```text
+/mcp    # check the MCP server
+/hooks  # review/trust hooks
+```
+
+---
+
+## 🧠 Embeddings
 
 Default backend is selected during `imemory` setup.
 
@@ -87,16 +171,15 @@ max_length = 1024
 batch_size = 4
 ```
 
-GPU Qwen3-Embedding is installed automatically when option 1 is selected. Runtime device is detected automatically (`cuda` or `mps` if available, otherwise `cpu`). Model files are stored under `~/.codex/infinite-memory/models/huggingface`.
+### Local Qwen mode
 
-CPU Qwen3-Embedding is installed when option 2 is selected. The installer uses the CPU-only PyTorch build.
+- 🔥 Model: `Qwen/Qwen3-Embedding-0.6B`
+- 📏 `max_length`: tokenizer limit per chunk, in tokens. Default: `1024`
+- 📦 `batch_size`: chunks embedded per model call. Default: `4`
+- 🧊 Increase batch size on larger GPUs; decrease it if VRAM runs out
+- 📁 Model cache: `~/.codex/infinite-memory/models/huggingface`
 
-Local embedding options:
-
-- `max_length`: tokenizer limit per chunk, in tokens. Default: `1024`.
-- `batch_size`: number of chunks embedded per model call. Default: `4`; increase on larger GPUs, decrease if VRAM runs out.
-
-Custom OpenAI-compatible endpoint:
+### Custom OpenAI-compatible endpoint
 
 ```toml
 [embedding]
@@ -106,18 +189,24 @@ model = "text-embedding-3-small"
 api_key_env = "CUSTOM_EMBEDDINGS_API_KEY"
 ```
 
-## CLI
+---
+
+## ⚔️ CLI Commands
 
 ```bash
-imemory              # setup config, database, and Codex MCP
+imemory              # setup config, database, hooks, and Codex MCP
 imemory setup        # same as above
-imemory ingest       # index Codex sessions
+imemory ingest       # manually index Codex sessions
 imemory ingest --force
 imemory search "query text" --session-id SESSION_ID
 imemory stats
 ```
 
-## MCP tools
+Manual `imemory ingest` exists for explicit imports. The normal memory path is hook-based capture after setup.
+
+---
+
+## 🧩 MCP Tools
 
 - `memory_ingest(force=false)`
 - `infinite_memory_search(query, session_id, limit=8)`
@@ -125,12 +214,50 @@ imemory stats
 - `memory_get(chunk_id, session_id)`
 - `memory_forget_session(session_id)`
 
-## Usage
+The main tool is the one that matters:
 
-Codex is instructed through `~/.codex/AGENTS.md` to decide for itself whether prior conversation context would help. When it judges memory is useful, it can call `infinite_memory.infinite_memory_search` with the current `session_id`. You can still force a manual lookup by saying something like “infinite memory search ...”. Results are formatted without metadata.
+```text
+infinite_memory_search
+```
 
-Automatic hook capture is installed. `Stop` indexes the current transcript after each completed turn. `PostCompact` marks the current session after Codex compacts context. The next `UserPromptSubmit` searches Infinite Memory once for that same session and injects the retrieved snippets as temporary context. After that one prompt, the flag is cleared. Existing historical Codex sessions are not automatically imported.
+When prior decisions, setup details, new task context, topic changes, or post-compaction continuity matter, Codex can call it and pull the right memory back into the conversation.
 
-## License
+---
+
+## 🕹️ Usage
+
+You can nudge Codex directly:
+
+```text
+infinite memory search what did we decide about batch size?
+```
+
+Or let Codex decide through the installed `AGENTS.md` hint:
+
+```text
+When prior conversation context may matter, use infinite_memory_search.
+```
+
+Search results are formatted without metadata, so the model gets the memory without noisy IDs, timestamps, or scores.
+
+---
+
+## 📦 Package
+
+npm:
+
+```bash
+npm install -g @menteai/infinite-memory
+```
+
+GitHub:
+
+```text
+git@github.com:menteai/codex-infinite-memory.git
+```
+
+---
+
+## 📜 License
 
 Apache-2.0. See [LICENSE](LICENSE).
