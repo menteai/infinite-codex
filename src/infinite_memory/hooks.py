@@ -14,7 +14,6 @@ os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 warnings.filterwarnings("ignore", message=".*torch_dtype.*")
 
 from .config import ensure_default_config, load_config
-from .ingest import Ingester
 
 
 def _state_dir() -> Path:
@@ -129,7 +128,9 @@ def _format_memory_results(results: list[dict[str, Any]]) -> str:
     return "\n\n".join(blocks)
 
 
-async def _ingest_hook_transcript(hook_input: dict[str, Any]) -> Ingester:
+async def _ingest_hook_transcript(hook_input: dict[str, Any]):
+    from .ingest import Ingester
+
     ensure_default_config()
     ingester = Ingester(load_config())
     transcript_path = _transcript_path(hook_input)
@@ -181,14 +182,10 @@ def post_compact() -> None:
     hook_input = _read_input()
     session_id = _session_id(hook_input)
     if session_id:
-        try:
-            asyncio.run(_ingest_hook_transcript(hook_input))
-        except Exception as exc:
-            log_path = _state_dir() / "errors.log"
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            with log_path.open("a", encoding="utf-8") as file:
-                file.write(f"post_compact ingest failed: {exc}\n")
-
+        # PostCompact has a short Codex timeout. Do not load the embedding model or
+        # run ingestion here; just mark that the next user prompt should recall.
+        # The heavier ingest/search work runs in UserPromptSubmit, which has a
+        # larger timeout.
         _state_dir().mkdir(parents=True, exist_ok=True)
         flag = {
             "session_id": session_id,
