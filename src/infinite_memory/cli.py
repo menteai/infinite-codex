@@ -117,7 +117,7 @@ def register_codex_hooks(hooks_path: Path = CODEX_HOOKS) -> str:
                     "type": "command",
                     "command": f"{python} -m infinite_memory.hooks user-prompt-submit",
                     "statusMessage": "Checking Infinite Memory compact recall",
-                    "timeout": 120,
+                    "timeout": 600,
                 }
             ],
         },
