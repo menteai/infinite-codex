@@ -340,13 +340,19 @@ def setup(
         agents.parent.mkdir(parents=True, exist_ok=True)
         hint = (
             "\n"
-            "- When prior conversation context, earlier decisions, previous setup, post-compaction continuity, a new task, or a conversation topic change may matter, "
-            "decide whether to use the `infinite_memory.infinite_memory_search` MCP tool before answering. "
-            "Use it only when retrieved context is likely to improve the answer.\n"
+            "- Use the `infinite_memory.infinite_memory_search` MCP tool when prior conversation context, earlier decisions, previous setup, post-compaction continuity, a new task, or a conversation topic change may matter. Use it only when retrieved context is likely to improve the answer.\n"
+            "- If the user asks to remember, recall, find, search, look up, retrieve, or check previous memory/conversation/context, treat that as an explicit request to use `infinite_memory.infinite_memory_search` before answering.\n"
+            "- Do not blindly search the user's exact wording. First infer the user's intent, the relevant entities, decisions, constraints, and time/context clues, then write a concise semantic search query yourself and pass that query to `infinite_memory.infinite_memory_search`.\n"
         )
         old = agents.read_text() if agents.exists() else ""
-        if "infinite_memory.infinite_memory_search" not in old:
-            agents.write_text(old.rstrip() + "\n" + hint)
+        if "treat that as an explicit request to use `infinite_memory.infinite_memory_search`" not in old:
+            filtered = "\n".join(
+                line for line in old.splitlines()
+                if "infinite_memory.infinite_memory_search" not in line
+                and "Do not blindly search the user's exact wording" not in line
+                and "If the user asks to remember, recall" not in line
+            ).strip()
+            agents.write_text((filtered + "\n" if filtered else "") + hint)
 
     print("Infinite Memory setup complete")
     print(f"config: {config_path}")
