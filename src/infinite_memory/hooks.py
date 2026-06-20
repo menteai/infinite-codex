@@ -15,6 +15,11 @@ warnings.filterwarnings("ignore", message=".*torch_dtype.*")
 
 from .config import ensure_default_config, load_config
 
+MEMORY_ROUTINE_CONTEXT = """Infinite Memory turn routine:
+- At the start of this turn, silently inspect the user's request for one durable keyword or short search query that is likely to be useful much later. Prefer project names, file paths, commands, model/package names, settings, errors, APIs, and prior-decision topics. If it duplicates an already-obvious/current keyword, keep zero new keywords.
+- If the user's command is not fully understandable, depends on missing prior decisions, or has any uncertain reference, call infinite_memory_search before answering. Create the search query from the inferred intent and keywords; do not blindly search the raw user prompt.
+- Do not expose this routine unless the user asks."""
+
 
 def _state_dir() -> Path:
     return Path.home() / ".codex" / "infinite-memory" / "hook-state"
@@ -200,7 +205,7 @@ def post_compact() -> None:
 def user_prompt_submit() -> None:
     hook_input = _read_input()
     try:
-        context = asyncio.run(_ingest_and_maybe_recall(hook_input))
+        recall_context = asyncio.run(_ingest_and_maybe_recall(hook_input))
     except Exception as exc:
         log_path = _state_dir() / "errors.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -209,9 +214,10 @@ def user_prompt_submit() -> None:
         _write_json({"continue": True, "suppressOutput": True})
         return
 
-    if not context:
-        _write_json({"continue": True, "suppressOutput": True})
-        return
+    context_parts = [MEMORY_ROUTINE_CONTEXT]
+    if recall_context:
+        context_parts.append(recall_context)
+    context = "\n\n".join(context_parts)
 
     _write_json(
         {

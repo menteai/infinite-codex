@@ -1,6 +1,6 @@
 {
   "name": "@menteai/infinite-memory",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Vector memory MCP server for Codex session history",
   "license": "Apache-2.0",
   "type": "module",
