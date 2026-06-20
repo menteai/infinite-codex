@@ -325,12 +325,12 @@ def setup(
     new_model_key = EmbeddingClient(embedding).model_key
     existing_models = stats.get("models", [])
     if existing_models and new_model_key not in existing_models:
-        print(f"Embedding model changed to {new_model_key}. Clearing old embeddings and re-indexing sessions...")
+        print(f"Embedding model changed to {new_model_key}. Clearing old embeddings and re-embedding stored memories...")
         db.conn.execute("DELETE FROM chunks")
         db.conn.commit()
         from .ingest import Ingester
-        asyncio.run(Ingester(cfg).ingest(force=False))
-        print("Re-index complete.")
+        asyncio.run(Ingester(cfg).reembed_existing_messages())
+        print("Re-embedding complete.")
 
     mcp_action = register_codex_mcp() if register else "skipped"
     hooks_action = register_codex_hooks() if register_hooks else "skipped"

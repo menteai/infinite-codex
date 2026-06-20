@@ -61,7 +61,43 @@ class Ingester:
         if reset_chunks and explicit_paths:
             target_session_ids = None
 
-        messages = self.db.messages_without_chunks(self.embedder.model_key, target_session_ids)
+        embedded = await self._embed_messages_without_chunks(target_session_ids)
+
+        stats = self.db.stats()
+        stats.update({
+            "files_total": len(files),
+            "files_parsed": parsed,
+            "files_skipped": skipped,
+            "messages_appended": appended,
+            "sessions_replaced": replaced,
+            "chunks_embedded": embedded,
+            "chunks_reset_for_settings_change": reset_chunks,
+        })
+        return stats
+
+    async def reembed_existing_messages(self) -> dict:
+        """Embed messages that are already in the database without importing logs."""
+        reset_chunks = self.db.ensure_index_settings(
+            self.embedder.model_key,
+            chunk_chars=self.config.chunk_chars,
+            chunk_overlap_chars=self.config.chunk_overlap_chars,
+            max_length=self.embedder.config.max_length,
+        )
+        embedded = await self._embed_messages_without_chunks(session_ids=None)
+        stats = self.db.stats()
+        stats.update({
+            "files_total": 0,
+            "files_parsed": 0,
+            "files_skipped": 0,
+            "messages_appended": 0,
+            "sessions_replaced": 0,
+            "chunks_embedded": embedded,
+            "chunks_reset_for_settings_change": reset_chunks,
+        })
+        return stats
+
+    async def _embed_messages_without_chunks(self, session_ids: set[str] | None = None) -> int:
+        messages = self.db.messages_without_chunks(self.embedder.model_key, session_ids)
         chunk_jobs: list[tuple] = []
         texts: list[str] = []
         for msg in messages:
@@ -101,17 +137,7 @@ class Ingester:
                 embedded += 1
             self.db.conn.commit()
 
-        stats = self.db.stats()
-        stats.update({
-            "files_total": len(files),
-            "files_parsed": parsed,
-            "files_skipped": skipped,
-            "messages_appended": appended,
-            "sessions_replaced": replaced,
-            "chunks_embedded": embedded,
-            "chunks_reset_for_settings_change": reset_chunks,
-        })
-        return stats
+        return embedded
 
     async def search(self, query: str, session_id: str, limit: int = 8) -> list[dict]:
         if not session_id:
