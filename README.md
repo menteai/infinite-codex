@@ -1,4 +1,4 @@
-# 🔥 INFINITE MEMORY FOR CODEX — YOUR CODEX NOW REMEMBERS EVERYTHING FOREVER 🔥
+# 🔥 INFINITE MEMORY FOR CODEX — YOUR CODEX NOW REMEMBERS FOREVER 🔥
 
 > Give Codex a permanent, unlimited memory.  
 > No compaction loss. Preserve memories from 525 turns ago. 🧠⚡
