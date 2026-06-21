@@ -58,6 +58,17 @@ def _session_id(hook_input: dict[str, Any]) -> str:
     return str(value or "").strip()
 
 
+def _parent_session_id(hook_input: dict[str, Any]) -> str:
+    value = _find_value(
+        hook_input,
+        "forked_from_id",
+        "forkedFromId",
+        "parent_session_id",
+        "parentSessionId",
+    )
+    return str(value or "").strip()
+
+
 def _transcript_path(hook_input: dict[str, Any]) -> str | None:
     value = _find_value(
         hook_input,
@@ -117,6 +128,33 @@ def _recent_user_prompts(transcript_path: str | None, limit: int = 3) -> list[st
     except OSError:
         return []
     return prompts[-limit:]
+
+
+def _record_fork_parent(hook_input: dict[str, Any]) -> None:
+    try:
+        session_id = _session_id(hook_input)
+        parent_session_id = _parent_session_id(hook_input)
+
+        transcript_path = _transcript_path(hook_input)
+        if transcript_path and Path(transcript_path).exists():
+            from .codex_sessions import parse_session_metadata
+
+            metadata = parse_session_metadata(Path(transcript_path))
+            session_id = metadata.session_id or session_id
+            parent_session_id = metadata.forked_from_id or parent_session_id
+
+        if not session_id or not parent_session_id:
+            return
+
+        from .db import MemoryDB
+
+        ensure_default_config()
+        MemoryDB(load_config().db_path).upsert_session_parent(session_id, parent_session_id)
+    except Exception as exc:
+        log_path = _state_dir() / "errors.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as file:
+            file.write(f"record fork parent failed: {exc}\n")
 
 
 def _format_memory_results(results: list[dict[str, Any]]) -> str:
@@ -180,6 +218,7 @@ def _write_json(value: dict[str, Any]) -> None:
 
 def post_compact() -> None:
     hook_input = _read_input()
+    _record_fork_parent(hook_input)
     session_id = _session_id(hook_input)
     if session_id:
         # PostCompact has a short Codex timeout. Do not load the embedding model or
@@ -200,6 +239,7 @@ def post_compact() -> None:
 def user_prompt_submit() -> None:
     hook_input = _read_input()
     try:
+        _record_fork_parent(hook_input)
         context = asyncio.run(_ingest_and_maybe_recall(hook_input))
     except Exception as exc:
         log_path = _state_dir() / "errors.log"
@@ -228,6 +268,7 @@ def user_prompt_submit() -> None:
 def stop() -> None:
     hook_input = _read_input()
     try:
+        _record_fork_parent(hook_input)
         asyncio.run(_ingest_hook_transcript(hook_input))
     except Exception as exc:
         log_path = _state_dir() / "errors.log"

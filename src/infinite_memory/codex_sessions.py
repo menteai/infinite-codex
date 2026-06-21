@@ -19,6 +19,13 @@ class SessionMessage:
     turn_id: str | None = None
 
 
+@dataclass(frozen=True)
+class SessionMetadata:
+    session_id: str
+    forked_from_id: str | None = None
+    cwd: str | None = None
+
+
 def iter_session_files(root: Path) -> Iterable[Path]:
     if not root.exists():
         return []
@@ -56,6 +63,38 @@ def _skip_user_message(text: str) -> bool:
 
 def _format_turn(user_text: str, assistant_text: str) -> str:
     return f"User:\n{user_text.strip()}\n\nAssistant:\n{assistant_text.strip()}"
+
+
+def parse_session_metadata(path: Path) -> SessionMetadata:
+    session_id = path.stem
+    cwd: str | None = None
+    forked_from_id: str | None = None
+
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            if obj.get("type") != "session_meta":
+                continue
+
+            payload = obj.get("payload") or {}
+            session_id = payload.get("id") or session_id
+            cwd = payload.get("cwd") or cwd
+            forked_from_id = (
+                payload.get("forked_from_id")
+                or payload.get("parent_session_id")
+                or payload.get("parentSessionId")
+            )
+            break
+
+    return SessionMetadata(
+        session_id=str(session_id),
+        forked_from_id=str(forked_from_id) if forked_from_id else None,
+        cwd=str(cwd) if cwd else None,
+    )
 
 
 def parse_session_file(path: Path) -> list[SessionMessage]:

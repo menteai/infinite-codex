@@ -1,6 +1,6 @@
 import json
 
-from infinite_memory.codex_sessions import parse_session_file
+from infinite_memory.codex_sessions import parse_session_file, parse_session_metadata
 
 
 def test_parse_complete_turn_and_ignore_duplicates_and_commentary(tmp_path):
@@ -34,3 +34,25 @@ def test_ignore_incomplete_aborted_and_startup_context(tmp_path):
     ]
     p.write_text("\n".join(json.dumps(r) for r in rows))
     assert parse_session_file(p) == []
+
+
+def test_parse_fork_metadata(tmp_path):
+    p = tmp_path / "s.jsonl"
+    p.write_text(
+        json.dumps(
+            {
+                "type": "session_meta",
+                "payload": {
+                    "id": "child",
+                    "forked_from_id": "parent",
+                    "cwd": "/x",
+                },
+            }
+        )
+    )
+
+    metadata = parse_session_metadata(p)
+
+    assert metadata.session_id == "child"
+    assert metadata.forked_from_id == "parent"
+    assert metadata.cwd == "/x"

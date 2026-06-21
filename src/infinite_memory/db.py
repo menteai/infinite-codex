@@ -56,6 +56,11 @@ class MemoryDB:
                 size INTEGER NOT NULL,
                 indexed_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS session_parents (
+                session_id TEXT PRIMARY KEY,
+                parent_session_id TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
@@ -82,6 +87,8 @@ class MemoryDB:
             );
             CREATE INDEX IF NOT EXISTS idx_chunks_session ON chunks(session_id);
             CREATE INDEX IF NOT EXISTS idx_chunks_model ON chunks(embedding_model);
+            CREATE INDEX IF NOT EXISTS idx_session_parents_parent
+                ON session_parents(parent_session_id);
             """
         )
         parser_row = self.conn.execute(
@@ -125,6 +132,48 @@ class MemoryDB:
             """,
             (session_id, str(path), stat.st_mtime, stat.st_size),
         )
+
+    def upsert_session_parent(self, session_id: str, parent_session_id: str | None) -> None:
+        session_id = (session_id or "").strip()
+        parent_session_id = (parent_session_id or "").strip()
+        if not session_id or not parent_session_id or session_id == parent_session_id:
+            return
+        self.conn.execute(
+            """
+            INSERT OR REPLACE INTO session_parents(session_id, parent_session_id, created_at)
+            VALUES (?, ?, datetime('now'))
+            """,
+            (session_id, parent_session_id),
+        )
+        self.conn.commit()
+
+    def session_ancestor_ids(self, session_id: str, max_depth: int = 32) -> list[str]:
+        current = (session_id or "").strip()
+        if not current:
+            return []
+
+        ancestors: list[str] = []
+        seen = {current}
+        for _ in range(max(0, max_depth)):
+            row = self.conn.execute(
+                "SELECT parent_session_id FROM session_parents WHERE session_id = ?",
+                (current,),
+            ).fetchone()
+            if not row:
+                break
+            parent = str(row["parent_session_id"] or "").strip()
+            if not parent or parent in seen:
+                break
+            ancestors.append(parent)
+            seen.add(parent)
+            current = parent
+        return ancestors
+
+    def session_search_scope(self, session_id: str, max_depth: int = 32) -> list[str]:
+        session_id = (session_id or "").strip()
+        if not session_id:
+            return []
+        return [session_id, *self.session_ancestor_ids(session_id, max_depth=max_depth)]
 
     def _insert_message(self, msg: SessionMessage, ordinal: int) -> None:
         self.conn.execute(
@@ -195,6 +244,7 @@ class MemoryDB:
         self.conn.execute("DELETE FROM chunks WHERE session_id = ?", (session_id,))
         self.conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
         self.conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
+        self.conn.execute("DELETE FROM session_parents WHERE session_id = ?", (session_id,))
         self.conn.commit()
         return int(chunk_count)
 
@@ -296,12 +346,24 @@ class MemoryDB:
         embedding_model: str,
         limit: int,
         session_id: str,
+        include_ancestors: bool = True,
     ) -> list[dict[str, Any]]:
         if not session_id:
             return []
+        session_ids = (
+            self.session_search_scope(session_id)
+            if include_ancestors
+            else [session_id]
+        )
+        if not session_ids:
+            return []
+        placeholders = ",".join("?" for _ in session_ids)
         rows = self.conn.execute(
-            "SELECT * FROM chunks WHERE embedding_model = ? AND session_id = ?",
-            (embedding_model, session_id),
+            f"""
+            SELECT * FROM chunks
+            WHERE embedding_model = ? AND session_id IN ({placeholders})
+            """,
+            (embedding_model, *session_ids),
         ).fetchall()
         scored = []
         for row in rows:
@@ -314,9 +376,13 @@ class MemoryDB:
     def get_chunk(self, chunk_id: int, session_id: str) -> dict[str, Any] | None:
         if not session_id:
             return None
+        session_ids = self.session_search_scope(session_id)
+        if not session_ids:
+            return None
+        placeholders = ",".join("?" for _ in session_ids)
         row = self.conn.execute(
-            "SELECT * FROM chunks WHERE id = ? AND session_id = ?",
-            (chunk_id, session_id),
+            f"SELECT * FROM chunks WHERE id = ? AND session_id IN ({placeholders})",
+            (chunk_id, *session_ids),
         ).fetchone()
         if not row:
             return None
@@ -336,6 +402,7 @@ class MemoryDB:
             "db_path": str(self.path),
             "sqlite_vec_loaded": self.vec_enabled,
             "sessions": self.conn.execute("SELECT COUNT(*) c FROM sessions").fetchone()["c"],
+            "session_parent_links": self.conn.execute("SELECT COUNT(*) c FROM session_parents").fetchone()["c"],
             "messages": self.conn.execute("SELECT COUNT(*) c FROM messages").fetchone()["c"],
             "chunks": self.conn.execute("SELECT COUNT(*) c FROM chunks").fetchone()["c"],
             "models": [r["embedding_model"] for r in self.conn.execute("SELECT DISTINCT embedding_model FROM chunks ORDER BY 1")],

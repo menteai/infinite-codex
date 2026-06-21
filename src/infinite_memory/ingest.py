@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .chunking import chunk_text
-from .codex_sessions import iter_session_files, parse_session_file
+from .codex_sessions import iter_session_files, parse_session_file, parse_session_metadata
 from .config import MemoryConfig
 from .db import MemoryDB
 from .embeddings import EmbeddingClient, normalize
@@ -33,11 +33,14 @@ class Ingester:
             if not path.exists():
                 skipped += 1
                 continue
+            metadata = parse_session_metadata(path)
             if not force and self.db.session_current(path):
+                self.db.upsert_session_parent(metadata.session_id, metadata.forked_from_id)
                 skipped += 1
                 continue
             messages = parse_session_file(path)
             if not messages:
+                self.db.upsert_session_parent(metadata.session_id, metadata.forked_from_id)
                 skipped += 1
                 continue
             if target_session_ids is not None:
@@ -51,6 +54,7 @@ class Ingester:
                 parsed += 1
                 appended += inserted
                 replaced += int(did_replace)
+            self.db.upsert_session_parent(messages[0].session_id, metadata.forked_from_id)
 
         reset_chunks = self.db.ensure_index_settings(
             self.embedder.model_key,

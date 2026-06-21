@@ -22,6 +22,7 @@ Two killer promises:
 - 💸 **Free local embeddings by default** — no required paid API
 - 💯 **Original text preserved intact** — efficient recall without lossy memory rewriting
 - 🔎 **Semantic search** over remembered turns
+- 🌿 **Fork inheritance** so child sessions can recall parent-session memories
 - 🪝 **Lifecycle hooks** that save completed turns automatically
 - 🧩 **MCP tool integration** for model-controlled recall
 - 💥 **Post-compaction recall** so Codex can recover context after compression
@@ -97,6 +98,8 @@ Vector goes into SQLite
   ↓
 Codex later calls infinite_memory_search
   ↓
+Current session + fork ancestors are searched
+  ↓
 Relevant memories come back as clean context
 ```
 
@@ -107,7 +110,7 @@ PostCompact hook marks the session
   ↓
 Next UserPromptSubmit hook fires
   ↓
-Infinite Memory searches the current session once
+Infinite Memory searches the current session and fork ancestors once
   ↓
 Retrieved snippets are injected as temporary context
   ↓

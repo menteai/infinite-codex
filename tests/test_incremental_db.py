@@ -118,3 +118,48 @@ def test_reembed_existing_messages_does_not_import_session_logs(tmp_path):
     assert stats["files_total"] == 0
     assert db.conn.execute("SELECT COUNT(*) c FROM sessions").fetchone()["c"] == 1
     assert db.conn.execute("SELECT COUNT(*) c FROM chunks").fetchone()["c"] == 1
+
+
+def test_fork_child_searches_parent_chain(tmp_path):
+    db = MemoryDB(tmp_path / "memory.sqlite3")
+    model = "test-model"
+
+    for session_id, content, vector in [
+        ("A", "root memory", [1.0, 0.0]),
+        ("B", "child memory", [0.9, 0.1]),
+        ("C", "grandchild memory", [0.8, 0.2]),
+    ]:
+        session_file = tmp_path / f"{session_id}.jsonl"
+        session_file.write_text(content)
+        db.upsert_session_messages_incremental(
+            session_file,
+            [_msg(session_file, session_id, 0, content)],
+        )
+        row = db.conn.execute(
+            "SELECT id FROM messages WHERE session_id = ?",
+            (session_id,),
+        ).fetchone()
+        db.insert_chunk(
+            session_id=session_id,
+            message_id=row["id"],
+            chunk_index=0,
+            embedding_model=model,
+            content=content,
+            search_text=content,
+            embedding=vector,
+            metadata={},
+        )
+
+    db.conn.commit()
+    db.upsert_session_parent("B", "A")
+    db.upsert_session_parent("C", "B")
+
+    results = db.search_bruteforce([1.0, 0.0], model, limit=10, session_id="C")
+    assert {result["session_id"] for result in results} == {"A", "B", "C"}
+
+    child_results = db.search_bruteforce([1.0, 0.0], model, limit=10, session_id="B")
+    assert {result["session_id"] for result in child_results} == {"A", "B"}
+
+    ancestor_chunk_id = next(result["chunk_id"] for result in results if result["session_id"] == "A")
+    assert db.get_chunk(ancestor_chunk_id, session_id="C")["content"] == "root memory"
+    assert db.get_chunk(ancestor_chunk_id, session_id="B")["content"] == "root memory"

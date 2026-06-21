@@ -43,7 +43,7 @@ async def _search_memory(query: str, session_id: str, limit: int = 5) -> str:
 
 @mcp.tool()
 async def infinite_memory_search(query: str, session_id: str, limit: int = 5) -> str:
-    """Infinite Memory search. Use when the user says infinite search, search infinite memory, search previous turns, or asks to recall prior context in this session."""
+    """Infinite Memory search over the current session and fork ancestors. Use when the user asks to recall prior context."""
     return await _search_memory(query=query, session_id=session_id, limit=limit)
 
 
@@ -61,7 +61,7 @@ def memory_stats() -> dict[str, Any]:
 
 @mcp.tool()
 def memory_get(chunk_id: int, session_id: str) -> str:
-    """Return a chunk only when it belongs to the specified Codex session."""
+    """Return a chunk only when it belongs to the specified Codex session or its fork ancestors."""
     ensure_default_config()
     result = MemoryDB(load_config().db_path).get_chunk(chunk_id, session_id=session_id)
     return str(result.get("content") or "") if result else ""
